@@ -87,10 +87,13 @@ Enable the timer as an interrupt source:
 tim15.listen(Event::TimeOut);
 ```
 
-Obtain a _ticker_ from the `CLOCK` to be used in the ISR:
+Obtain a _ticker_ from the `CLOCK` to be used in the ISR. The `ticker(...)` method takes two arguments:
+
+1. Some object you can use to clear the timeout (otherwise unconstrained).
+2. A function-like thing that can use the object in (1) above, to clear the timeout.
 
 ```rust
-tim15.listen(Event::TimeOut);
+let ticker = CLOCK.ticker(tim15, (|t| { t.clear_interrupt(Event::TimeOut); }) as fn(&mut Timer<TIM15>));
 ```
 
 Using RTIC, you may wish to assign the _ticker_ into the shared resources object:
