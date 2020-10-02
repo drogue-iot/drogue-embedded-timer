@@ -93,7 +93,9 @@ Obtain a _ticker_ from the `CLOCK` to be used in the ISR. The `ticker(...)` meth
 2. A function-like thing that can use the object in (1) above, to clear the timeout.
 
 ```rust
-let ticker = CLOCK.ticker(tim15, (|t| { t.clear_interrupt(Event::TimeOut); }) as fn(&mut Timer<TIM15>));
+let ticker = CLOCK.ticker(
+               tim15, 
+               (|t| { t.clear_interrupt(Event::TimeOut); }) as fn(&mut Timer<TIM15>));
 ```
 
 Using RTIC, you may wish to assign the _ticker_ into the shared resources object:
