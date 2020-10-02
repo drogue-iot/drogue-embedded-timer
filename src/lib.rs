@@ -1,6 +1,7 @@
 #![no_std]
 
-pub mod clock;
+mod clock;
+pub use clock::*;
 
 #[macro_export]
 macro_rules! embedded_countdown {
