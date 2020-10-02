@@ -10,6 +10,7 @@ use embedded_time::fixed_point::FixedPoint;
 use core::borrow::BorrowMut;
 use core::cell::Cell;
 use cortex_m::interrupt;
+use core::marker::PhantomData;
 
 struct Storage<Clock: embedded_time::Clock> {
     instant: Mutex<Cell<Option<Instant<Clock>>>>
@@ -57,15 +58,15 @@ impl<Clock> Storage<Clock>
     }
 }
 
-pub struct Ticker<'a, Timer, IrqClearer: Fn(&mut Timer)>
+pub struct Ticker<'a, TIM, Timer, IrqClearer: Fn(&mut Timer)>
 {
     timer: Timer,
     irq_clearer: IrqClearer,
-    instant: &'a Storage<InterruptDriverClock>,
+    instant: &'a Storage<SoftClock<TIM>>,
 }
 
-impl<'a, Timer, IrqClearer: Fn(&mut Timer)> Ticker<'a, Timer, IrqClearer> {
-    fn new(timer: Timer, irq_clearer: IrqClearer, storage: &'a Storage<InterruptDriverClock>) -> Self {
+impl<'a, TIM, Timer, IrqClearer: Fn(&mut Timer)> Ticker<'a, TIM, Timer, IrqClearer> {
+    fn new(timer: Timer, irq_clearer: IrqClearer, storage: &'a Storage<SoftClock<TIM>>) -> Self {
         Self {
             timer,
             irq_clearer,
@@ -79,31 +80,28 @@ impl<'a, Timer, IrqClearer: Fn(&mut Timer)> Ticker<'a, Timer, IrqClearer> {
     }
 }
 
-pub struct InterruptDriverClock {
-    instant: Storage<InterruptDriverClock>
+pub struct SoftClock<TIM>
+{
+    instant: Storage<SoftClock<TIM>>,
 }
 
-impl InterruptDriverClock {
-    pub const fn new() -> Self {
+impl<TIM> SoftClock<TIM> {
+    pub const fn new() -> Self
+    {
         Self {
             instant: Storage {
-                //instant: Mutex::new(Cell::new( Instant::new(0)))
-                instant: Mutex::new(Cell::new( Option::None ) )
-            }
+                instant: Mutex::new(Cell::new(Option::None)),
+            },
         }
     }
 
-    pub fn ticker<Timer, IrqClearer: Fn(&mut Timer)>(&self, timer: Timer, irq_clearer: IrqClearer) -> Ticker<Timer,IrqClearer> {
-        Ticker {
-            timer: timer,
-            irq_clearer: irq_clearer,
-            instant: &self.instant
-        }
+    pub fn ticker<Timer, IrqClearer: Fn(&mut Timer)>(&self, timer: Timer, irq_clearer: IrqClearer) -> Ticker<TIM, Timer, IrqClearer> {
+        let i = &self.instant;
+        Ticker::new(timer, irq_clearer, i)
     }
-
 }
 
-impl Clock for InterruptDriverClock {
+impl<TIM> Clock for SoftClock<TIM> {
     type T = u32;
     const SCALING_FACTOR: Fraction = Fraction::new(1, 4);
 
@@ -113,13 +111,29 @@ impl Clock for InterruptDriverClock {
 }
 
 
+
 /*
+#[macro_export]
 macro_rules! clock {
-    ($slices_per_second:literal, $slices_per_tick:literal) => {
-        nothing
-    }
+    ($TIM:ident, $slices_per_second:literal, $slices_per_tick:literal) => {
+
+        use embedded_time::fraction::Fraction;
+        use embedded_time::clock::Clock;
+
+        impl Clock for SoftClock<$TIM> {
+            type T = u32;
+            const SCALING_FACTOR: Fraction = Fraction::new(1, 4);
+
+            fn try_now(&self) -> Result<Instant<Self>, Error> {
+                Ok(self.instant.get())
+            }
+        }
+     }
 }
 
+ */
+
+/*
 macro_rules! ms_clock {
     ($precision:literal) => {
         clock!( 1000, $precision )
