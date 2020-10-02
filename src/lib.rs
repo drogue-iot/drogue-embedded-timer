@@ -1,10 +1,12 @@
 #![no_std]
 
+pub mod clock;
+
 #[macro_export]
 macro_rules! embedded_countdown {
     ($name:ident, $from_unit:ty, $to_unit:ty => ($arg:tt) $convert:tt) => {
 
-        struct $name<CD: CountDown<Time=$to_unit>> {
+        pub struct $name<CD: CountDown<Time=$to_unit>> {
             t: CD,
         }
 
