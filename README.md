@@ -149,3 +149,15 @@ let my_timer = embedded_time::Timer::new(&CLOCK, Seconds(10u32));
 let my_timer = my_timer.start().unwrap();
 my_timer.wait().unwrap();
 ```
+
+# Reusable Delays
+
+This crate also provides functionality similar to Embedded HAL's `DelayMs` and `DelayUs` objects.
+A delay may be directly constructed, or created through a clock's `delay()` factory.
+
+```rust
+let delay = &CLOCK.delay();
+delay.delay(Milliseconds(50u32));
+```
+
+Once a `Delay` has expired, it may be re-used.

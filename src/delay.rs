@@ -4,6 +4,7 @@ use embedded_time::fixed_point::FixedPoint;
 use core::convert::TryFrom;
 
 /// A blocking delay
+#[derive(Copy, Clone)]
 pub struct Delay<'a, Clock>
     where Clock: embedded_time::Clock
 {
