@@ -31,30 +31,27 @@ impl<Clock> Storage<Clock>
             interrupt::free(|cs| {
                 let instant = self.instant.borrow(&cs);
                 let i = instant.get();
-                let i = if i.is_some() {
-                    Some(
-                        i.unwrap().checked_add(duration).unwrap()
-                    )
-                } else {
-                    Some(Instant::new(Clock::T::from(0u32)))
-                };
 
-                instant.replace(i);
+                instant.replace(Some(
+                    if i.is_some() {
+                        i.unwrap().checked_add(duration).unwrap()
+                    } else {
+                        Instant::new(Clock::T::from(0u32))
+                    }
+                ));
             });
         }
     }
 
-    fn get(&self) -> Instant<Clock>
-    {
+    fn get(&self) -> Result<Instant<Clock>, Error> {
         unsafe {
             interrupt::free(|cs| {
-                let i = self.instant.borrow(cs).get();
-                let j = if i.is_some() {
-                    i.unwrap()
+                let instant = self.instant.borrow(&cs).get();
+                if instant.is_some() {
+                    Ok(instant.unwrap())
                 } else {
-                    Instant::new(Clock::T::from(0u32))
-                };
-                j
+                    Err(Error::NotRunning)
+                }
             })
         }
     }
@@ -84,7 +81,7 @@ impl<'a, Clock: embedded_time::Clock, Timer, IrqClearer: Fn(&mut Timer)> Ticker<
 }
 
 macro_rules! clock {
-    ($name:ident, $ticker_type:ident, $per_second:literal, $per_tick:literal, $dur:expr) => {
+    ($name:ident, $ticker_type:ident, $dur:expr, $scaling_factor:expr) => {
 
         pub struct $name
         {
@@ -109,10 +106,11 @@ macro_rules! clock {
 
         impl Clock for $name {
             type T = u32;
-            const SCALING_FACTOR: Fraction = Fraction::new($per_tick, $per_second);
+            const SCALING_FACTOR: Fraction = $scaling_factor;
 
             fn try_now(&self) -> Result<Instant<Self>, Error> {
-                Ok(self.instant.get())
+                //Ok(self.instant.get())
+                self.instant.get()
             }
         }
         ticker!($ticker_type, $dur);
@@ -146,12 +144,17 @@ macro_rules! ticker {
     }
 }
 
-clock!(MillisecondsClock1, MillisecondsTicker1, 1000, 1, Milliseconds(1u32));
-clock!(MillisecondsClock10, MillisecondsTicker10, 1000, 10, Milliseconds(10u32));
-clock!(MillisecondsClock50, MillisecondsTicker50, 1000, 50, Milliseconds(50u32));
-clock!(MillisecondsClock100, MillisecondsTicker100, 1000, 100, Milliseconds(100u32));
-clock!(MillisecondsClock200, MillisecondsTicker200, 1000, 200, Milliseconds(200u32));
-clock!(MillisecondsClock250, MillisecondsTicker250, 1000, 250, Milliseconds(250u32));
-clock!(MillisecondsClock500, MillisecondsTicker500, 1000, 500, Milliseconds(500u32));
-clock!(SecondsClock, SecondsTicker, 1, 1, Seconds(1u32));
-//ticker!(SecondsTicker, Seconds(1u32));
+clock!(MillisecondsClock1, MillisecondsTicker1, Milliseconds(1u32), Fraction::new(1,1000));
+clock!(MillisecondsClock2, MillisecondsTicker2, Milliseconds(2u32), Fraction::new(1,500));
+clock!(MillisecondsClock5, MillisecondsTicker5, Milliseconds(5u32), Fraction::new(1,200));
+clock!(MillisecondsClock10, MillisecondsTicker10, Milliseconds(10u32), Fraction::new(1,100));
+clock!(MillisecondsClock25, MillisecondsTicker25, Milliseconds(10u32), Fraction::new(1,50));
+clock!(MillisecondsClock50, MillisecondsTicker50, Milliseconds(50u32), Fraction::new(1,20));
+clock!(MillisecondsClock100, MillisecondsTicker100, Milliseconds(100u32), Fraction::new(1,10));
+clock!(MillisecondsClock200, MillisecondsTicker200, Milliseconds(200u32), Fraction::new(1,5));
+clock!(MillisecondsClock250, MillisecondsTicker250, Milliseconds(250u32), Fraction::new(1,4));
+clock!(MillisecondsClock500, MillisecondsTicker500, Milliseconds(500u32), Fraction::new(1,2));
+clock!(SecondsClock1, SecondsTicker1, Seconds(1u32), Fraction::new(1,1));
+clock!(SecondsClock30, SecondsTicker30, Seconds(30u32), Fraction::new(30,1));
+clock!(SecondsClock60, SecondsTicker60, Seconds(60u32), Fraction::new(60,1));
+
