@@ -2,27 +2,29 @@ use core::{cell::Cell, convert::TryFrom};
 use cortex_m::interrupt::{self, Mutex};
 use embedded_time::{
     clock::{Clock, Error},
-    duration::{Duration, Milliseconds, Seconds},
+    duration::{Duration, Milliseconds, Microseconds, Seconds},
     fixed_point::FixedPoint,
     fraction::Fraction,
     Instant,
 };
 
+use crate::delay::Delay;
+
 struct Storage<Clock>
-where
-    Clock: embedded_time::Clock,
+    where
+        Clock: embedded_time::Clock,
 {
     instant: Mutex<Cell<Option<Instant<Clock>>>>,
 }
 
 impl<Clock> Storage<Clock>
-where
-    Clock: embedded_time::Clock,
+    where
+        Clock: embedded_time::Clock,
 {
     fn tick<Dur>(&self, duration: Dur)
-    where
-        Dur: Duration + FixedPoint,
-        Clock::T: TryFrom<Dur::T>,
+        where
+            Dur: Duration + FixedPoint,
+            Clock::T: TryFrom<Dur::T>,
     {
         interrupt::free(|cs| {
             let instant = self.instant.borrow(&cs);
@@ -49,12 +51,15 @@ where
 }
 
 macro_rules! clock {
+
     ($name:ident, $ticker_type:ident, $dur:expr, $scaling_factor:expr) => {
+        /// An external tickable clock.
         pub struct $name {
             instant: Storage<Self>,
         }
 
         impl $name {
+            /// Construct a new instance of the Clock.
             pub const fn new() -> Self {
                 Self {
                     instant: Storage {
@@ -63,12 +68,18 @@ macro_rules! clock {
                 }
             }
 
+            /// Construct a ticker for this clock.
             pub fn ticker<Timer, IrqClearer: Fn(&mut Timer)>(
                 &self,
                 timer: Timer,
                 irq_clearer: IrqClearer,
             ) -> $ticker_type<Self, Timer, IrqClearer> {
                 $ticker_type::new(timer, irq_clearer, &self.instant)
+            }
+
+            /// Obtain a blocking delay for this clock.
+            pub fn delay(&self) -> Delay<Self> {
+                Delay::new(self)
             }
         }
 
@@ -86,6 +97,9 @@ macro_rules! clock {
 
 macro_rules! ticker {
     ($name:ident, $tick:expr) => {
+
+        /// An external clock ticker.
+        /// Use from within an interrupt handler, typically.
         pub struct $name<'a, Clock: embedded_time::Clock, Timer, IrqClearer: Fn(&mut Timer)> {
             timer: Timer,
             irq_clearer: IrqClearer,
@@ -111,6 +125,80 @@ macro_rules! ticker {
         }
     };
 }
+
+// Microseconds
+
+clock!(
+    MicrosecondsClock1,
+    MicrosecondsTicker1,
+    Microseconds(1u32),
+    Fraction::new(1, 1_000_000)
+);
+
+clock!(
+    MicrosecondsClock2,
+    MicrosecondsTicker2,
+    Microseconds(2u32),
+    Fraction::new(1, 500_000)
+);
+
+clock!(
+    MicrosecondsClock5,
+    MicrosecondsTicker5,
+    Microseconds(5u32),
+    Fraction::new(1, 200_000)
+);
+
+clock!(
+    MicrosecondsClock10,
+    MicrosecondsTicker10,
+    Microseconds(10u32),
+    Fraction::new(1, 100_000)
+);
+
+clock!(
+    MicrosecondsClock25,
+    MicrosecondsTicker25,
+    Microseconds(10u32),
+    Fraction::new(1, 50_000)
+);
+
+clock!(
+    MicrosecondsClock50,
+    MicrosecondsTicker50,
+    Microseconds(50u32),
+    Fraction::new(1, 20_000)
+);
+
+clock!(
+    MicrosecondsClock100,
+    MicrosecondsTicker100,
+    Microseconds(100u32),
+    Fraction::new(1, 10_000)
+);
+
+clock!(
+    MicrosecondsClock200,
+    MicrosecondsTicker200,
+    Microseconds(200u32),
+    Fraction::new(1, 5_000)
+);
+
+clock!(
+    MicrosecondsClock250,
+    MicrosecondsTicker250,
+    Microseconds(250u32),
+    Fraction::new(1, 4_000)
+);
+
+clock!(
+    MicrosecondsClock500,
+    MicrosecondsTicker500,
+    Microseconds(500u32),
+    Fraction::new(1, 2_000)
+);
+
+// Milliseconds
 
 clock!(
     MillisecondsClock1,
@@ -172,6 +260,9 @@ clock!(
     Milliseconds(500u32),
     Fraction::new(1, 2)
 );
+
+// Seconds
+
 clock!(
     SecondsClock1,
     SecondsTicker1,

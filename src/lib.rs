@@ -1,7 +1,10 @@
 #![cfg_attr(not(test), no_std)]
 
 mod clock;
+mod delay;
+
 pub use clock::*;
+pub use delay::*;
 
 #[macro_export]
 /// Wrap a HAL-specific CountDown into an embedded-time-centric CountDown

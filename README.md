@@ -1,5 +1,10 @@
 # `drogue-embedded-timer`
 
+[![crates.io](https://img.shields.io/crates/v/drogue-embedded-timer.svg)](https://crates.io/crates/drogue-embedded-timer)
+[![docs.rs](https://docs.rs/drogue-embedded-timer/badge.svg)](https://docs.rs/drogue-embedded-timer)
+[![Matrix](https://img.shields.io/matrix/drogue-iot:matrix.org)](https://matrix.to/#/#drogue-iot:matrix.org)
+
+
 When writing device drivers against `embedded-hal`, a wall can be hit when attempting to work with `CountDown` timers due to the `Time` associated type.
 
 The `embedded-time` crate is attempting to homogenous the concept of time, clocks, durations and rates.
@@ -49,6 +54,16 @@ You decide the precision of clock you want to use, first.
 
 The available precisions are:
 
+* 1 microsecond
+* 2 microsecond
+* 5 microsecond
+* 10 microseconds
+* 25 microseconds
+* 50 microseconds
+* 100 microseconds
+* 200 microseconds
+* 250 microseconds
+* 500 microseconds
 * 1 millisecond
 * 2 millisecond
 * 5 millisecond
