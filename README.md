@@ -50,13 +50,18 @@ You decide the precision of clock you want to use, first.
 The available precisions are:
 
 * 1 millisecond
+* 2 millisecond
+* 5 millisecond
 * 10 milliseconds
+* 25 milliseconds
 * 50 milliseconds
 * 100 milliseconds
 * 200 milliseconds
 * 250 milliseconds
 * 500 milliseconds
 * 1 second
+* 30 seconds
+* 60 seconds
 
 Each clock type has a related _Ticker_ type that must also be used:
 
