@@ -4,12 +4,26 @@ use embedded_time::fixed_point::FixedPoint;
 use core::convert::TryFrom;
 
 /// A blocking delay
-#[derive(Copy, Clone)]
+///#[derive(Copy, Clone)]
 pub struct Delay<'a, Clock>
     where Clock: embedded_time::Clock
 {
     clock: &'a Clock
 }
+
+impl<Clock> Clone for Delay<'_, Clock>
+    where Clock: embedded_time::Clock {
+    fn clone(&self) -> Self {
+        Self {
+            clock: self.clock,
+        }
+    }
+}
+
+impl<Clock> Copy for Delay<'_, Clock>
+    where Clock: embedded_time::Clock { }
+
+
 
 impl<'a, Clock> Delay<'a, Clock>
     where
