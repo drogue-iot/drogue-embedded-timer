@@ -1,6 +1,7 @@
 use embedded_time::Timer;
-use embedded_time::duration::Duration;
+use embedded_time::duration::{Duration, Milliseconds, Microseconds};
 use embedded_time::fixed_point::FixedPoint;
+use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 use core::convert::TryFrom;
 
 /// A blocking delay
@@ -51,3 +52,41 @@ impl<'a, Clock> Delay<'a, Clock>
         timer.wait().unwrap();
     }
 }
+
+macro_rules! delay_impl {
+    ($impl:ident, $func:ident, $vt:ident, $wt:ident) => {
+            impl<'a, Clock> $impl<$vt> for Delay<'a, Clock>
+            where
+                Clock: embedded_time::Clock,
+        {
+            fn $func(&mut self, value: $vt) {
+                self.delay($wt(value as u32))
+            }
+        }
+    };
+}
+
+delay_impl!(DelayMs, delay_ms, u8, Milliseconds);
+delay_impl!(DelayMs, delay_ms, u16, Milliseconds);
+delay_impl!(DelayUs, delay_us, u8, Microseconds);
+delay_impl!(DelayUs, delay_us, u16, Microseconds);
+
+/*
+impl<'a, Clock> DelayMs<u16> for Delay<'a, Clock>
+    where
+        Clock: embedded_time::Clock,
+{
+    fn delay_ms(&mut self, value: u16) {
+        self.delay(Milliseconds(value as u32))
+    }
+}
+
+impl<'a, Clock> DelayMs<u8> for Delay<'a, Clock>
+    where
+        Clock: embedded_time::Clock,
+{
+    fn delay_ms(&mut self, ms: u8) {
+        self.delay(Milliseconds(ms as u32))
+    }
+}
+ */
