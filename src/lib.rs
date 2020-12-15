@@ -25,18 +25,19 @@ macro_rules! embedded_countdown {
             CD: CountDown<Time = $to_unit>,
         {
             type Time = $from_unit;
+            type Error = CD::Error;
 
-            fn start<T>(&mut self, count: T)
+            fn try_start<T>(&mut self, count: T) -> Result<(), Self::Error>
             where
                 T: Into<Self::Time>,
             {
                 let $arg: $from_unit = count.into();
                 let to_count = $convert;
-                self.t.start(to_count);
+                self.t.try_start(to_count)
             }
 
-            fn wait(&mut self) -> nb::Result<(), void::Void> {
-                self.t.wait()
+            fn try_wait(&mut self) -> nb::Result<(), Self::Error> {
+                self.t.try_wait()
             }
         }
     };
