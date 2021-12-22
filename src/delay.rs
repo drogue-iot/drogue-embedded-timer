@@ -1,7 +1,7 @@
 use ::core::convert::Infallible;
 use core::convert::TryFrom;
-use embedded_hal::blocking::delay::{DelayMs, DelayUs};
-use embedded_time::duration::{Duration, Microseconds, Milliseconds};
+use embedded_hal::delay::blocking::DelayUs;
+use embedded_time::duration::{Duration, Microseconds};
 use embedded_time::fixed_point::FixedPoint;
 use embedded_time::Timer;
 
@@ -48,42 +48,13 @@ where
     }
 }
 
-macro_rules! delay_impl {
-    ($impl:ident, $func:ident, $vt:ident, $wt:ident) => {
-        impl<'a, Clock> $impl<$vt> for Delay<'a, Clock>
-        where
-            Clock: embedded_time::Clock,
-        {
-            type Error = Infallible;
-
-            fn $func(&mut self, value: $vt) -> Result<(), Infallible> {
-                Ok(self.delay($wt(value as u32)))
-            }
-        }
-    };
-}
-
-delay_impl!(DelayMs, try_delay_ms, u8, Milliseconds);
-delay_impl!(DelayMs, try_delay_ms, u16, Milliseconds);
-delay_impl!(DelayUs, try_delay_us, u8, Microseconds);
-delay_impl!(DelayUs, try_delay_us, u16, Microseconds);
-
-/*
-impl<'a, Clock> DelayMs<u16> for Delay<'a, Clock>
-    where
-        Clock: embedded_time::Clock,
+impl<'a, Clock> DelayUs for Delay<'a, Clock>
+where
+    Clock: embedded_time::Clock,
 {
-    fn delay_ms(&mut self, value: u16) {
-        self.delay(Milliseconds(value as u32))
+    type Error = Infallible;
+
+    fn delay_us(&mut self, value: u32) -> Result<(), Infallible> {
+        Ok(self.delay(Microseconds(value as u32)))
     }
 }
-
-impl<'a, Clock> DelayMs<u8> for Delay<'a, Clock>
-    where
-        Clock: embedded_time::Clock,
-{
-    fn delay_ms(&mut self, ms: u8) {
-        self.delay(Milliseconds(ms as u32))
-    }
-}
- */
