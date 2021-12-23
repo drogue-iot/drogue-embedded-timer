@@ -11,5 +11,5 @@ categories = ["embedded", "no-std"]
 
 [dependencies]
 embedded-time = "0.10.0"
-embedded-hal = "0.2"
+embedded-hal = "1.0.0-alpha.6"
 cortex-m = "0.6"

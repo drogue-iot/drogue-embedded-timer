@@ -20,22 +20,23 @@ macro_rules! embedded_countdown {
             }
         }
 
-        impl<CD> embedded_hal::timer::CountDown for $name<CD>
+        impl<CD> embedded_hal::timer::nb::CountDown for $name<CD>
         where
             CD: CountDown<Time = $to_unit>,
         {
             type Time = $from_unit;
+            type Error = CD::Error;
 
-            fn start<T>(&mut self, count: T)
+            fn start<T>(&mut self, count: T) -> Result<(), Self::Error>
             where
                 T: Into<Self::Time>,
             {
                 let $arg: $from_unit = count.into();
                 let to_count = $convert;
-                self.t.start(to_count);
+                self.t.start(to_count)
             }
 
-            fn wait(&mut self) -> nb::Result<(), void::Void> {
+            fn wait(&mut self) -> nb::Result<(), Self::Error> {
                 self.t.wait()
             }
         }
